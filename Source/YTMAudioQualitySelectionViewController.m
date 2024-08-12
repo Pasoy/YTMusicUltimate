@@ -1,3 +1,6 @@
+#import "YTMAudioQualitySelectionViewController.h"
+#import "Headers/Localization.h"
+
 @implementation YTMAudioQualitySelectionViewController
 
 - (void)viewDidLoad {
@@ -26,7 +29,7 @@
     NSArray *qualities = @[@"64k", @"128k", @"192k", @"320k"];
     NSString *selectedQuality = qualities[indexPath.row];
     [self.delegate audioQualitySelected:selectedQuality];
-    [self dismissViewControllerAnimated:YES completion:nil];
+    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
 }
 
 @end

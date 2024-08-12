@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import "FFMpegDownloader.h"
+#import "YTMAudioQualitySelectionViewController.h"
 #import "Headers/YTUIResources.h"
 #import "Headers/YTMActionSheetController.h"
 #import "Headers/YTMActionRowView.h"
@@ -126,8 +127,8 @@ static BOOL YTMU(NSString *key) {
 
 %new
 - (void)showAudioQualitySelection {
-    AudioQualitySelectionViewController *qualityVC = [[AudioQualitySelectionViewController alloc] init];
-    qualityVC.delegate = self;
+    YTMAudioQualitySelectionViewController *qualityVC = [[YTMAudioQualitySelectionViewController alloc] init];
+    qualityVC.delegate = (id<YTMAudioQualitySelectionDelegate>)self;
     UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:qualityVC];
     [self.parentResponder presentViewController:navController animated:YES completion:nil];
 }
