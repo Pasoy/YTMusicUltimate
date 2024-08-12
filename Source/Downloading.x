@@ -102,7 +102,7 @@ static BOOL YTMU(NSString *key) {
         [sheetController addHeaderWithTitle:LOC(@"SELECT_ACTION") subtitle:nil];
 
         [sheetController addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"DOWNLOAD_AUDIO") iconImage:[%c(YTUIResources) audioOutline] style:0 handler:^ {
-            [self downloadAudio];
+            [self showAudioQualitySelection];
         }]];
 
         [sheetController addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"DOWNLOAD_COVER") iconImage:[%c(YTUIResources) outlineImageWithColor:[UIColor whiteColor]] style:0 handler:^ {
@@ -112,7 +112,7 @@ static BOOL YTMU(NSString *key) {
         if (YTMU(@"downloadAudio") && YTMU(@"downloadCoverImage")) {
             [sheetController presentFromViewController:self.parentResponder animated:YES completion:nil];
         } else if (YTMU(@"downloadAudio")) {
-            [self downloadAudio];
+            [self showAudioQualitySelection];
         } else if (YTMU(@"downloadCoverImage")) {
             [self downloadCoverImage];
         }
@@ -125,7 +125,20 @@ static BOOL YTMU(NSString *key) {
 }
 
 %new
-- (void)downloadAudio {
+- (void)showAudioQualitySelection {
+    AudioQualitySelectionViewController *qualityVC = [[AudioQualitySelectionViewController alloc] init];
+    qualityVC.delegate = self;
+    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:qualityVC];
+    [self.parentResponder presentViewController:navController animated:YES completion:nil];
+}
+
+%new
+- (void)audioQualitySelected:(NSString *)quality {
+    [self downloadAudioWithQuality:quality];
+}
+
+%new
+- (void)downloadAudioWithQuality:(NSString *)quality {
     YTMNowPlayingViewController *parentVC = self.parentResponder;
     YTPlayerResponse *playerResponse = parentVC.parentViewController.playerViewController.playerResponse;
 
@@ -137,6 +150,7 @@ static BOOL YTMU(NSString *key) {
     ffmpeg.tempName = parentVC.parentViewController.playerViewController.contentVideoID;
     ffmpeg.mediaName = [NSString stringWithFormat:@"%@ - %@", author, title];
     ffmpeg.duration = round(parentVC.parentViewController.playerViewController.currentVideoTotalMediaTime);
+    ffmpeg.quality = quality;
 
     NSData *manifestData = [NSData dataWithContentsOfURL:[NSURL URLWithString:urlStr]];
     NSString *manifestString = [[NSString alloc] initWithData:manifestData encoding:NSUTF8StringEncoding];
