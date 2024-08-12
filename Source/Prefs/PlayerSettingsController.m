@@ -26,7 +26,7 @@
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 4;
+    return 5;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -196,7 +196,39 @@
         }
     }
 
+    if (indexPath.section == 4) {
+        UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"defaultQualityCell"];
+        if (!cell) {
+            cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:@"defaultQualityCell"];
+        }
+        
+        cell.textLabel.text = LOC(@"DEFAULT_AUDIO_QUALITY");
+        
+        NSMutableDictionary *YTMUltimateDict = [NSMutableDictionary dictionaryWithDictionary:[[NSUserDefaults standardUserDefaults] dictionaryForKey:@"YTMUltimate"]];
+        NSString *currentQuality = YTMUltimateDict[@"defaultAudioQuality"] ?: @"best";
+        
+        if ([currentQuality isEqualToString:@"manual"]) {
+            cell.detailTextLabel.text = LOC(@"MANUAL");
+        } else {
+            cell.detailTextLabel.text = [currentQuality isEqualToString:@"best"] ? LOC(@"BEST_POSSIBLE") : currentQuality;
+        }
+        
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        return cell;
+    }
+
     return cell;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
+    if (indexPath.section == 4) {
+        YTMAudioQualitySelectionViewController *qualityVC = [[YTMAudioQualitySelectionViewController alloc] init];
+        qualityVC.delegate = self;
+        qualityVC.isDefaultQualitySelection = YES;
+        [self.navigationController pushViewController:qualityVC animated:YES];
+    }
 }
 
 - (BOOL)tableView:(UITableView *)tableView shouldHighlightRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -292,6 +324,16 @@
 
 - (void)hideKeyboard {
     [self.view endEditing:YES];
+}
+
+#pragma mark - YTMAudioQualitySelectionDelegate
+
+- (void)audioQualitySelected:(NSString *)quality {
+    NSMutableDictionary *YTMUltimateDict = [NSMutableDictionary dictionaryWithDictionary:[[NSUserDefaults standardUserDefaults] dictionaryForKey:@"YTMUltimate"]];
+    [YTMUltimateDict setObject:quality forKey:@"defaultAudioQuality"];
+    [[NSUserDefaults standardUserDefaults] setObject:YTMUltimateDict forKey:@"YTMUltimate"];
+    
+    [self.tableView reloadData];
 }
 
 @end

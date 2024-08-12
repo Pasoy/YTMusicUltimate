@@ -6,4 +6,5 @@
 
 @interface YTMAudioQualitySelectionViewController : UITableViewController
 @property (nonatomic, weak) id<YTMAudioQualitySelectionDelegate> delegate;
+@property (nonatomic, assign) BOOL isDefaultQualitySelection;
 @end

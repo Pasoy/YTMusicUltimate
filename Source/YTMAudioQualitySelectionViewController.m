@@ -3,6 +3,8 @@
 
 @implementation YTMAudioQualitySelectionViewController
 
+@synthesize isDefaultQualitySelection = _isDefaultQualitySelection;
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.title = LOC(@"SELECT_AUDIO_QUALITY");
@@ -10,7 +12,7 @@
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return 4;
+    return self.isDefaultQualitySelection ? 6 : 5;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -19,17 +21,28 @@
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
     }
     
-    NSArray *qualities = @[@"64k", @"128k", @"192k", @"320k"];
+    NSArray *qualities = self.isDefaultQualitySelection ? 
+        @[LOC(@"MANUAL"), LOC(@"BEST_POSSIBLE"), @"64k", @"128k", @"192k", @"320k"] :
+        @[LOC(@"BEST_POSSIBLE"), @"64k", @"128k", @"192k", @"320k"];
+    
     cell.textLabel.text = qualities[indexPath.row];
     
     return cell;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSArray *qualities = @[@"64k", @"128k", @"192k", @"320k"];
+    NSArray *qualities = self.isDefaultQualitySelection ?
+        @[@"manual", @"best", @"64k", @"128k", @"192k", @"320k"] :
+        @[@"best", @"64k", @"128k", @"192k", @"320k"];
+    
     NSString *selectedQuality = qualities[indexPath.row];
     [self.delegate audioQualitySelected:selectedQuality];
-    [self.navigationController dismissViewControllerAnimated:YES completion:nil];
+    
+    if (self.isDefaultQualitySelection) {
+        [self.navigationController popViewControllerAnimated:YES];
+    } else {
+        [self dismissViewControllerAnimated:YES completion:nil];
+    }
 }
 
 @end

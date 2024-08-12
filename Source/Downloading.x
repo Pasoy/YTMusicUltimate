@@ -98,24 +98,31 @@ static BOOL YTMU(NSString *key) {
     YTPlayerResponse *playerResponse = self.parentResponder.parentViewController.playerViewController.playerResponse;
 
     if (playerResponse) {
-        YTMActionSheetController *sheetController = [%c(YTMActionSheetController) musicActionSheetController];
-        sheetController.sourceView = sender;
-        [sheetController addHeaderWithTitle:LOC(@"SELECT_ACTION") subtitle:nil];
+        NSMutableDictionary *YTMUltimateDict = [NSMutableDictionary dictionaryWithDictionary:[[NSUserDefaults standardUserDefaults] dictionaryForKey:@"YTMUltimate"]];
+        NSString *defaultQuality = YTMUltimateDict[@"defaultAudioQuality"] ?: @"best";
 
-        [sheetController addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"DOWNLOAD_AUDIO") iconImage:[%c(YTUIResources) audioOutline] style:0 handler:^ {
-            [self showAudioQualitySelection];
-        }]];
+        if ([defaultQuality isEqualToString:@"manual"]) {
+            YTMActionSheetController *sheetController = [%c(YTMActionSheetController) musicActionSheetController];
+            sheetController.sourceView = sender;
+            [sheetController addHeaderWithTitle:LOC(@"SELECT_ACTION") subtitle:nil];
 
-        [sheetController addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"DOWNLOAD_COVER") iconImage:[%c(YTUIResources) outlineImageWithColor:[UIColor whiteColor]] style:0 handler:^ {
-            [self downloadCoverImage];
-        }]];
+            [sheetController addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"DOWNLOAD_AUDIO") iconImage:[%c(YTUIResources) audioOutline] style:0 handler:^ {
+                [self showAudioQualitySelection];
+            }]];
 
-        if (YTMU(@"downloadAudio") && YTMU(@"downloadCoverImage")) {
-            [sheetController presentFromViewController:self.parentResponder animated:YES completion:nil];
-        } else if (YTMU(@"downloadAudio")) {
-            [self showAudioQualitySelection];
-        } else if (YTMU(@"downloadCoverImage")) {
-            [self downloadCoverImage];
+            [sheetController addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"DOWNLOAD_COVER") iconImage:[%c(YTUIResources) outlineImageWithColor:[UIColor whiteColor]] style:0 handler:^ {
+                [self downloadCoverImage];
+            }]];
+
+            if (YTMU(@"downloadAudio") && YTMU(@"downloadCoverImage")) {
+                [sheetController presentFromViewController:self.parentResponder animated:YES completion:nil];
+            } else if (YTMU(@"downloadAudio")) {
+                [self showAudioQualitySelection];
+            } else if (YTMU(@"downloadCoverImage")) {
+                [self downloadCoverImage];
+            }
+        } else {
+            [self downloadAudioWithQuality:defaultQuality];
         }
     } else {
         YTAlertView *alertView = [%c(YTAlertView) infoDialog];

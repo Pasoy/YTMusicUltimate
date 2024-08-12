@@ -29,6 +29,8 @@
 "AV_DEFAULT_MODE" = "Default playback mode";
 "AUDIO" = "Audio";
 "VIDEO" = "Video";
+"DEFAULT_AUDIO_QUALITY" = "Default Audio Quality";
+"MANUAL" = "Manual";
 
 "SKIP_NONMUSIC_PARTS" = "SponsorBlock";
 "SKIP_NONMUSIC_PARTS_DESC" = "Skips non-music sections in music videos";
