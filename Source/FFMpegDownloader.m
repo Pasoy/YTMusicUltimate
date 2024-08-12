@@ -33,7 +33,13 @@
 
     [MobileFFmpegConfig setLogDelegate:self];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        NSString *ffmpegCommand = [NSString stringWithFormat:@"-i %@ -vn -acodec libmp3lame -b:a %@ %@", audioURL, self.quality, destinationURL];
+        NSString *ffmpegCommand;
+        if ([self.quality isEqualToString:@"0"]) {
+            ffmpegCommand = [NSString stringWithFormat:@"-i %@ -vn -acodec libmp3lame -q:a 0 %@", audioURL, destinationURL];
+        } else {
+            ffmpegCommand = [NSString stringWithFormat:@"-i %@ -vn -acodec libmp3lame -b:a %@ %@", audioURL, self.quality, destinationURL];
+        }
+        
         int returnCode = [MobileFFmpeg execute:ffmpegCommand];
         dispatch_async(dispatch_get_main_queue(), ^{
             if (returnCode == RETURN_CODE_SUCCESS) {

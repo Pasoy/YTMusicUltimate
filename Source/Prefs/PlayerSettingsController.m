@@ -223,7 +223,7 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
     
-    if (indexPath.section == 4) {
+    if (indexPath.section == 4 && indexPath.row == 0) {
         YTMAudioQualitySelectionViewController *qualityVC = [[YTMAudioQualitySelectionViewController alloc] init];
         qualityVC.delegate = self;
         qualityVC.isDefaultQualitySelection = YES;

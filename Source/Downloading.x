@@ -158,7 +158,12 @@ static BOOL YTMU(NSString *key) {
     ffmpeg.tempName = parentVC.parentViewController.playerViewController.contentVideoID;
     ffmpeg.mediaName = [NSString stringWithFormat:@"%@ - %@", author, title];
     ffmpeg.duration = round(parentVC.parentViewController.playerViewController.currentVideoTotalMediaTime);
-    ffmpeg.quality = quality;
+    
+    if ([quality isEqualToString:@"best"]) {
+        ffmpeg.quality = @"0";
+    } else {
+        ffmpeg.quality = quality;
+    }
 
     NSData *manifestData = [NSData dataWithContentsOfURL:[NSURL URLWithString:urlStr]];
     NSString *manifestString = [[NSString alloc] initWithData:manifestData encoding:NSUTF8StringEncoding];
