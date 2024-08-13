@@ -26,7 +26,7 @@
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 5;
+    return 4;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -61,7 +61,7 @@
     if (indexPath.section == 0) {
     NSArray *settingsData = @[
         @{@"title": LOC(@"DOWNLOAD_AUDIO"), @"desc": LOC(@"DOWNLOAD_AUDIO_DESC"), @"key": @"downloadAudio"},
-        @{@"title": LOC(@"DEFAULT_AUDIO_QUALITY"), @"key": @"defaultAudioQuality"},
+        @{@"title": LOC(@"DEFAULT_AUDIO_QUALITY"), @"desc": LOC(@"DEFAULT_AUDIO_QUALITY_DESC"), @"key": @"defaultAudioQuality"},
         @{@"title": LOC(@"DOWNLOAD_COVER"), @"desc": LOC(@"DOWNLOAD_COVER_DESC"), @"key": @"downloadCoverImage"},
         @{@"title": LOC(@"PLAYBACK_RATE_BUTTON"), @"desc": LOC(@"PLAYBACK_RATE_BUTTON_DESC"), @"key": @"playbackRateButton"},
         @{@"title": LOC(@"SELECTABLE_LYRICS"), @"desc": LOC(@"SELECTABLE_LYRICS_DESC"), @"key": @"selectableLyrics"},

@@ -29,7 +29,9 @@
 "AV_DEFAULT_MODE" = "Default playback mode";
 "AUDIO" = "Audio";
 "VIDEO" = "Video";
+"SELECT_AUDIO_QUALITY" = "Select Audio Quality";
 "DEFAULT_AUDIO_QUALITY" = "Default Audio Quality";
+"DEFAULT_AUDIO_QUALITY_DESC" = "Sets the default audio quality for downloads.\n\nManual = you'll be prompted to choose the quality for each download\nIf a specific bitrate is chosen, it will be used when available\nBest possible = highest available quality";
 "MANUAL" = "Manual";
 "BEST_POSSIBLE" = "Best possible";
 
