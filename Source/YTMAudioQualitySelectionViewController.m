@@ -22,8 +22,8 @@
     }
     
     NSArray *qualities = self.isDefaultQualitySelection ? 
-        @[LOC(@"MANUAL"), LOC(@"BEST_POSSIBLE"), @"64k", @"128k", @"192k", @"320k"] :
-        @[LOC(@"BEST_POSSIBLE"), @"64k", @"128k", @"192k", @"320k"];
+        @[LOC(@"MANUAL"), @"64k", @"128k", @"192k", @"320k", LOC(@"BEST_POSSIBLE")] :
+        @[@"64k", @"128k", @"192k", @"320k", LOC(@"BEST_POSSIBLE")];
     
     cell.textLabel.text = qualities[indexPath.row];
     
@@ -32,8 +32,8 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     NSArray *qualities = self.isDefaultQualitySelection ?
-        @[@"manual", @"best", @"64k", @"128k", @"192k", @"320k"] :
-        @[@"best", @"64k", @"128k", @"192k", @"320k"];
+        @[@"manual", @"64k", @"128k", @"192k", @"320k", @"best"] :
+        @[@"64k", @"128k", @"192k", @"320k", @"best"];
     
     NSString *selectedQuality = qualities[indexPath.row];
     [self.delegate audioQualitySelected:selectedQuality];
