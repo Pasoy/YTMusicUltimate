@@ -3,3 +3,6 @@
 .upload.swp
 .vscode/
 packages/
+.idea/
+repopack-output.txt
+repopack.config.json
