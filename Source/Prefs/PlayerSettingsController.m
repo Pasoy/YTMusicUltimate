@@ -228,7 +228,7 @@
 }
 
 - (BOOL)tableView:(UITableView *)tableView shouldHighlightRowAtIndexPath:(NSIndexPath *)indexPath {
-    return YES;
+    return indexPath.section == 0 && indexPath.row == 1 ? YES : NO;
 }
 
 - (void)toggleSwitch:(UISwitch *)sender {
