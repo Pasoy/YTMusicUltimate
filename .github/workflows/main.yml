@@ -108,17 +108,17 @@ jobs:
           cd ${{ github.workspace }}/main/packages
           tweakName=$(ls)
           cd ${{ github.workspace }}/main
-          ./Azule/azule -i $PWD/YouTubeMusic.ipa -o $PWD/packages/YTMusicUltimate.ipa -f $PWD/packages/$tweakName 
+          ./Azule/azule -i $PWD/YouTubeMusic.ipa -o $PWD/packages/YTMusicUltimate-Pasoy.ipa -f $PWD/packages/$tweakName 
 
       - name: Remove the Watch folder
         run: |
           cd ${{ github.workspace }}/main/packages
-          mv YTMusicUltimate.ipa YTMusicUltimate.zip
-          unzip YTMusicUltimate.zip
+          mv YTMusicUltimate-Pasoy.ipa YTMusicUltimate-Pasoy.zip
+          unzip YTMusicUltimate-Pasoy.zip
           cd Payload/YoutubeMusic.app
           rm -rf Watch
           cd ../..
-          zip -r YTMusicUltimate.ipa Payload
+          zip -r YTMusicUltimate-Pasoy.ipa Payload
           rm -rf Payload    
 
       - name: Create Release
