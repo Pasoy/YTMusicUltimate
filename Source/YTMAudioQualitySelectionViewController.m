@@ -26,7 +26,19 @@
         @[@"64k", @"128k", @"192k", @"320k", LOC(@"BEST_POSSIBLE")];
     
     cell.textLabel.text = qualities[indexPath.row];
-    
+
+    if (self.isDefaultQualitySelection) {
+        NSMutableDictionary *YTMUltimateDict = [NSMutableDictionary dictionaryWithDictionary:[[NSUserDefaults standardUserDefaults] dictionaryForKey:@"YTMUltimate"]];
+        NSString *currentQuality = YTMUltimateDict[@"defaultAudioQuality"] ?: @"best";
+
+        NSArray *qualityValues = @[@"manual", @"64k", @"128k", @"192k", @"320k", @"best"];
+        if ([currentQuality isEqualToString:qualityValues[indexPath.row]]) {
+            cell.accessoryType = UITableViewCellAccessoryCheckmark;
+        } else {
+            cell.accessoryType = UITableViewCellAccessoryNone;
+        }
+    }
+
     return cell;
 }
 
@@ -34,12 +46,17 @@
     NSArray *qualities = self.isDefaultQualitySelection ?
         @[@"manual", @"64k", @"128k", @"192k", @"320k", @"best"] :
         @[@"64k", @"128k", @"192k", @"320k", @"best"];
-    
+
     NSString *selectedQuality = qualities[indexPath.row];
     [self.delegate audioQualitySelected:selectedQuality];
-    
+
     if (self.isDefaultQualitySelection) {
-        [self.navigationController popViewControllerAnimated:YES];
+        for (NSInteger i = 0; i < [tableView numberOfRowsInSection:0]; i++) {
+            UITableViewCell *cell = [tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:i inSection:0]];
+            cell.accessoryType = (i == indexPath.row) ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
+        }
+
+        [tableView deselectRowAtIndexPath:indexPath animated:YES];
     } else {
         [self dismissViewControllerAnimated:YES completion:nil];
     }
