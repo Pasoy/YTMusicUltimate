@@ -3,68 +3,66 @@
 
 @implementation YTMAudioQualitySelectionViewController
 
-@synthesize isDefaultQualitySelection = _isDefaultQualitySelection;
-
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.title = LOC(@"SELECT_AUDIO_QUALITY");
     self.tableView.tableFooterView = [UIView new];
-
+    
     self.feedbackGenerator = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
     [self.feedbackGenerator prepare];
+    
+    [self setupQualityArrays];
+}
+
+- (void)setupQualityArrays {
+    self.qualityValues = @[@"manual", @"64k", @"128k", @"192k", @"320k", @"best"];
+    NSArray *displayQualities = @[LOC(@"MANUAL"), @"64k", @"128k", @"192k", @"320k", LOC(@"BEST_POSSIBLE")];
+    
+    self.qualities = self.isDefaultQualitySelection ? displayQualities : [displayQualities subarrayWithRange:NSMakeRange(1, 5)];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return self.isDefaultQualitySelection ? 6 : 5;
+    return self.qualities.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"Cell"];
+    static NSString *CellIdentifier = @"Cell";
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    
     if (!cell) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"Cell"];
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
     }
     
-    NSArray *qualities = self.isDefaultQualitySelection ? 
-        @[LOC(@"MANUAL"), @"64k", @"128k", @"192k", @"320k", LOC(@"BEST_POSSIBLE")] :
-        @[@"64k", @"128k", @"192k", @"320k", LOC(@"BEST_POSSIBLE")];
+    cell.textLabel.text = self.qualities[indexPath.row];
+    cell.accessoryType = UITableViewCellAccessoryNone;
     
-    cell.textLabel.text = qualities[indexPath.row];
-
     if (self.isDefaultQualitySelection) {
-        NSMutableDictionary *YTMUltimateDict = [NSMutableDictionary dictionaryWithDictionary:[[NSUserDefaults standardUserDefaults] dictionaryForKey:@"YTMUltimate"]];
-        NSString *currentQuality = YTMUltimateDict[@"defaultAudioQuality"] ?: @"best";
-
-        NSArray *qualityValues = @[@"manual", @"64k", @"128k", @"192k", @"320k", @"best"];
-        if ([currentQuality isEqualToString:qualityValues[indexPath.row]]) {
+        NSDictionary *YTMUltimateDict = [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"YTMUltimate"];
+        NSString *currentQuality = [YTMUltimateDict objectForKey:@"defaultAudioQuality"];
+        if (currentQuality == nil) {
+            currentQuality = @"best";
+        }
+        if ([currentQuality isEqualToString:self.qualityValues[indexPath.row]]) {
             cell.accessoryType = UITableViewCellAccessoryCheckmark;
-        } else {
-            cell.accessoryType = UITableViewCellAccessoryNone;
         }
     }
-
+    
     return cell;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [self.feedbackGenerator impactOccurred];
-
-    NSArray *qualities = self.isDefaultQualitySelection ?
-        @[@"manual", @"64k", @"128k", @"192k", @"320k", @"best"] :
-        @[@"64k", @"128k", @"192k", @"320k", @"best"];
-
-    NSString *selectedQuality = qualities[indexPath.row];
+    
+    NSString *selectedQuality = self.qualityValues[self.isDefaultQualitySelection ? indexPath.row : indexPath.row + 1];
     [self.delegate audioQualitySelected:selectedQuality];
-
+    
     if (self.isDefaultQualitySelection) {
-        for (NSInteger i = 0; i < [tableView numberOfRowsInSection:0]; i++) {
-            UITableViewCell *cell = [tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:i inSection:0]];
-            cell.accessoryType = (i == indexPath.row) ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
-        }
-
-        [tableView deselectRowAtIndexPath:indexPath animated:YES];
+        [tableView reloadData];
     } else {
         [self dismissViewControllerAnimated:YES completion:nil];
     }
+    
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 @end
