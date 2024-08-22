@@ -4,5 +4,6 @@
 .vscode/
 packages/
 .idea/
-repopack-output.txt
-repopack.config.json
+*.json
+*.xml
+*.ipa
