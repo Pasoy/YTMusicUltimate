@@ -9,6 +9,9 @@
     [super viewDidLoad];
     self.title = LOC(@"SELECT_AUDIO_QUALITY");
     self.tableView.tableFooterView = [UIView new];
+
+    self.feedbackGenerator = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
+    [self.feedbackGenerator prepare];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
@@ -43,6 +46,8 @@
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    [self.feedbackGenerator impactOccurred];
+
     NSArray *qualities = self.isDefaultQualitySelection ?
         @[@"manual", @"64k", @"128k", @"192k", @"320k", @"best"] :
         @[@"64k", @"128k", @"192k", @"320k", @"best"];

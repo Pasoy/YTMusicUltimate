@@ -5,6 +5,7 @@
 @end
 
 @interface YTMAudioQualitySelectionViewController : UITableViewController
+@property (nonatomic, strong) UIImpactFeedbackGenerator *feedbackGenerator;
 @property (nonatomic, weak) id<YTMAudioQualitySelectionDelegate> delegate;
 @property (nonatomic, assign) BOOL isDefaultQualitySelection;
 @end
