@@ -7,6 +7,7 @@ static BOOL YTMU(NSString *key) {
 }
 
 @interface YTMNavigationBarView : UIView
+- (void)sortButtonTapped:(id)sender;
 @end
 
 @interface QTMButton : UIButton

@@ -5,6 +5,9 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
 
+    self.currentSortOption = 0;
+    self.isAscending = YES;
+
     self.tableView = [[UITableView alloc] initWithFrame:CGRectZero style:UITableViewStyleInsetGrouped];
     self.tableView.translatesAutoresizingMaskIntoConstraints = NO;
     self.tableView.dataSource = self;
@@ -23,6 +26,7 @@
     [self refreshAudioFiles];
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:@"ReloadDataNotification" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showSortOptions) name:@"YTMUShowSortOptions" object:nil];
 }
 
 - (void)maybeShowEmptyState {
@@ -353,6 +357,83 @@
     }
 
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
+}
+
+- (void)showSortOptions {
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:LOC(@"SORT_BY") message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    
+    NSArray *sortOptions = @[LOC(@"NAME"), LOC(@"DATE"), LOC(@"SIZE")];
+    NSArray *ascendingSymbols = @[@"A→Z", @"Old→New", @"Small→Big"];
+    NSArray *descendingSymbols = @[@"Z→A", @"New→Old", @"Big→Small"];
+    
+    for (NSInteger i = 0; i < sortOptions.count; i++) {
+        NSString *optionTitle = sortOptions[i];
+        if (i == self.currentSortOption) {
+            optionTitle = [NSString stringWithFormat:@"%@ (%@)", optionTitle, self.isAscending ? ascendingSymbols[i] : descendingSymbols[i]];
+        }
+        
+        UIAlertAction *action = [UIAlertAction actionWithTitle:optionTitle style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            if (i == self.currentSortOption) {
+                self.isAscending = !self.isAscending;
+            } else {
+                self.currentSortOption = i;
+                self.isAscending = YES;
+            }
+            [self sortAudioFiles];
+        }];
+        [alertController addAction:action];
+    }
+    
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:LOC(@"CANCEL") style:UIAlertActionStyleCancel handler:nil];
+    [alertController addAction:cancelAction];
+    
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+- (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex {
+    if (buttonIndex != actionSheet.cancelButtonIndex) {
+        if (buttonIndex == self.currentSortOption) {
+            self.isAscending = !self.isAscending;
+        } else {
+            self.currentSortOption = buttonIndex;
+            self.isAscending = YES;
+        }
+        [self sortAudioFiles];
+    }
+}
+
+- (void)sortAudioFiles {
+    NSURL *documentsURL = [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
+    NSURL *downloadsURL = [documentsURL URLByAppendingPathComponent:@"YTMusicUltimate"];
+    
+    NSArray *sortedFiles = [self.audioFiles sortedArrayUsingComparator:^NSComparisonResult(NSString *file1, NSString *file2) {
+        NSURL *url1 = [downloadsURL URLByAppendingPathComponent:file1];
+        NSURL *url2 = [downloadsURL URLByAppendingPathComponent:file2];
+        
+        NSDictionary *attrs1 = [[NSFileManager defaultManager] attributesOfItemAtPath:url1.path error:nil];
+        NSDictionary *attrs2 = [[NSFileManager defaultManager] attributesOfItemAtPath:url2.path error:nil];
+
+        NSComparisonResult result;
+        
+        switch (self.currentSortOption) {
+            case 0:
+                result = [file1 compare:file2];
+                break;
+            case 1:
+                result = [[attrs1 fileModificationDate] compare:[attrs2 fileModificationDate]];
+                break;
+            case 2:
+                result = [attrs1[NSFileSize] compare:attrs2[NSFileSize]];
+                break;
+            default:
+                result = NSOrderedSame;
+        }
+        
+        return self.isAscending ? result : (result * -1);
+    }];
+    
+    self.audioFiles = [NSMutableArray arrayWithArray:sortedFiles];
+    [self.tableView reloadData];
 }
 
 - (void)shareAll {

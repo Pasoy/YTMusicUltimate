@@ -122,5 +122,13 @@
 "ALL_DOWNLOADS" = "all download audios"; //keep it lowercase
 "DELETE" = "Delete";
 "RENAME" = "Rename";
+"SORT_BY" = "Sort by";
+"NAME" = "Name";
+"DATE" = "Date";
+"SIZE" = "Size";
+"SORT_OLD" = "Old";
+"SORT_NEW" = "New";
+"SORT_SMALL" = "Small";
+"SORT_BIG" = "Big";
 
 "WORKAROUND_REMINDER" = "If you are in a country where premium features are not available, it is advisable to activate the forced premium activation option.\n\nYou can manage this option later in YTMusicUltimate → %@ → %@.\n\nDo you want to enable %@ option now?";
