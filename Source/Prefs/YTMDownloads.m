@@ -363,8 +363,15 @@
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:LOC(@"SORT_BY") message:nil preferredStyle:UIAlertControllerStyleActionSheet];
     
     NSArray *sortOptions = @[LOC(@"NAME"), LOC(@"DATE"), LOC(@"SIZE")];
-    NSArray *ascendingSymbols = @[@"A→Z", @"Old→New", @"Small→Big"];
-    NSArray *descendingSymbols = @[@"Z→A", @"New→Old", @"Big→Small"];
+
+    NSString *ascendingOldNew = [NSString stringWithFormat:@"%@→%@", LOC(@"SORT_OLD"), LOC(@"SORT_NEW")];
+    NSString *ascendingSmallBig = [NSString stringWithFormat:@"%@→%@", LOC(@"SORT_SMALL"), LOC(@"SORT_BIG")];
+
+    NSString *descendingNewOld = [NSString stringWithFormat:@"%@→%@", LOC(@"SORT_NEW"), LOC(@"SORT_OLD")];
+    NSString *descendingBigSmall = [NSString stringWithFormat:@"%@→%@", LOC(@"SORT_BIG"), LOC(@"SORT_SMALL")];
+
+    NSArray *ascendingSymbols = @[@"A→Z", ascendingOldNew, ascendingSmallBig];
+    NSArray *descendingSymbols = @[@"Z→A", descendingNewOld, descendingBigSmall];
     
     for (NSInteger i = 0; i < sortOptions.count; i++) {
         NSString *optionTitle = sortOptions[i];
