@@ -419,12 +419,12 @@
         
         NSDictionary *attrs1 = [[NSFileManager defaultManager] attributesOfItemAtPath:url1.path error:nil];
         NSDictionary *attrs2 = [[NSFileManager defaultManager] attributesOfItemAtPath:url2.path error:nil];
-
-        NSComparisonResult result;
         
+        NSComparisonResult result;
+
         switch (self.currentSortOption) {
             case 0:
-                result = [file1 compare:file2];
+                result = [file1 compare:file2 options:NSCaseInsensitiveSearch];
                 break;
             case 1:
                 result = [[attrs1 fileModificationDate] compare:[attrs2 fileModificationDate]];
@@ -434,6 +434,7 @@
                 break;
             default:
                 result = NSOrderedSame;
+                break;
         }
         
         return self.isAscending ? result : (result * -1);

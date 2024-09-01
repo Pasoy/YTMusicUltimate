@@ -55,9 +55,8 @@ static BOOL YTMU(NSString *key) {
     @try {
         YTICommand *navEndpoint = [self valueForKey:@"_navEndpoint"];
         if ([navEndpoint.browseEndpoint.browseId isEqualToString:@"BHdownloadsVC"]) {
-            UIViewController *downloadPageController = [[YTMDownloads alloc] init];
+            YTMDownloads *downloadPageController = [[YTMDownloads alloc] init];
             [self addChildViewController:downloadPageController];
-            // FIXME: View issues
             [downloadPageController.view setFrame:CGRectMake(0.0f, 0.0f, self.view.frame.size.width, self.view.frame.size.height)];
             [self.view addSubview:downloadPageController.view];
             [self.view endEditing:YES];
@@ -67,4 +66,17 @@ static BOOL YTMU(NSString *key) {
         NSLog(@"Cannot show downloads vc, why? %@", exception.reason);
     }
 }
+
+- (void)viewDidAppear:(BOOL)animated {
+    %orig;
+    YTICommand *navEndpoint = [self valueForKey:@"_navEndpoint"];
+    if ([navEndpoint.browseEndpoint.browseId isEqualToString:@"BHdownloadsVC"]) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"YTMUShowTestButton" object:nil];
+        NSLog(@"VIEW DID APPEAR: DOWNLOADS, POST SHOW TEST BUTTON NOTIFICATION");
+    } else {
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"YTMUHideTestButton" object:nil];
+        NSLog(@"VIEW DID DISAPPEAR: DOWNLOADS, POST HIDE TEST BUTTON NOTIFICATION");
+    }
+}
+
 %end

@@ -1,18 +1,12 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import <Headers/YTMNavigationBarView.h>
+#import <Headers/YTQTMButton.h>
 
 static BOOL YTMU(NSString *key) {
     NSDictionary *YTMUltimateDict = [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"YTMUltimate"];
     return [YTMUltimateDict[key] boolValue];
 }
-
-@interface YTMNavigationBarView : UIView
-- (void)sortButtonTapped:(id)sender;
-@end
-
-@interface QTMButton : UIButton
-@property (nonatomic, copy, readwrite) NSString *accessibilityIdentifier;
-@end
 
 @interface YTMSortFilterButton : UIButton
 @end
@@ -57,7 +51,6 @@ static BOOL YTMU(NSString *key) {
         }
     }
 
-    // Add Test button
     QTMButton *testButton = [self viewWithTag:1001];
     if (!testButton) {
         testButton = [[NSClassFromString(@"QTMButton") alloc] init];
@@ -65,17 +58,19 @@ static BOOL YTMU(NSString *key) {
         [testButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         testButton.tag = 1001;
         testButton.accessibilityIdentifier = @"id.navigation.test.button";
+        testButton.hidden = YES;
         [testButton addTarget:self action:@selector(sortButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
         [self addSubview:testButton];
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateTestButtonVisibility:) name:@"YTMUShowTestButton" object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateTestButtonVisibility:) name:@"YTMUHideTestButton" object:nil];
     }
 
-    // Position the button
     CGSize buttonSize = [testButton sizeThatFits:CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX)];
     CGFloat buttonWidth = MAX(buttonSize.width, 44); // Ensure minimum touch target size
     CGFloat buttonHeight = MIN(MAX(buttonSize.height, 44), self.frame.size.height - 16); // Ensure minimum touch target size and fit within nav bar
     CGFloat buttonY = (self.frame.size.height - buttonHeight) / 2;
 
-    // Find the leftmost existing button
     CGFloat leftmostX = self.frame.size.width;
     for (UIView *button in existingButtons) {
         if (button.frame.origin.x < leftmostX) {
@@ -83,13 +78,28 @@ static BOOL YTMU(NSString *key) {
         }
     }
 
-    // Position the TEST button to the left of the existing buttons
-    CGFloat testButtonX = leftmostX - buttonWidth - 8; // 8 points of padding
+    CGFloat testButtonX = leftmostX - buttonWidth - 8;
     testButton.frame = CGRectMake(testButtonX, buttonY, buttonWidth, buttonHeight);
+}
+
+- (void)dealloc {
+    %orig;
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 %new
 - (void)sortButtonTapped:(id)sender {
     [[NSNotificationCenter defaultCenter] postNotificationName:@"YTMUShowSortOptions" object:nil];
 }
+
+%new
+- (void)updateTestButtonVisibility:(NSNotification *)notification {
+    QTMButton *testButton = [self viewWithTag:1001];
+    if ([notification.name isEqualToString:@"YTMUShowTestButton"]) {
+        testButton.hidden = NO;
+    } else if ([notification.name isEqualToString:@"YTMUHideTestButton"]) {
+        testButton.hidden = YES;
+    }
+}
+
 %end
