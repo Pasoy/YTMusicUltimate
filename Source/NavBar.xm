@@ -35,7 +35,7 @@ static BOOL YTMU(NSString *key) {
 
     UIView *sortFilterButton = nil;
     NSMutableArray *existingButtons = [NSMutableArray array];
-
+    
     for (UIView *subview in subviews) {
         if ([subview isKindOfClass:NSClassFromString(@"YTMSortFilterButton")]) {
             sortFilterButton = subview;
@@ -44,42 +44,52 @@ static BOOL YTMU(NSString *key) {
             [existingButtons addObject:subview];
         }
     }
-
+    
     if (YTMU(@"YTMUltimateIsEnabled") && YTMU(@"hideFilterButton")) {
         if (sortFilterButton != nil) {
             [sortFilterButton removeFromSuperview];
         }
     }
-
-    QTMButton *testButton = [self viewWithTag:1001];
-    if (!testButton) {
-        testButton = [[NSClassFromString(@"QTMButton") alloc] init];
-        [testButton setTitle:@"TEST" forState:UIControlStateNormal];
-        [testButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        testButton.tag = 1001;
-        testButton.accessibilityIdentifier = @"id.navigation.test.button";
-        testButton.hidden = YES;
-        [testButton addTarget:self action:@selector(sortButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-        [self addSubview:testButton];
+    
+    QTMButton *sortButton = (QTMButton *)[self viewWithTag:1001];
+    if (!sortButton) {
+        sortButton = [[NSClassFromString(@"QTMButton") alloc] init];
+        UIImage *sortImage = [UIImage systemImageNamed:@"line.3.horizontal.circle"];
+        [sortButton setImage:sortImage forState:UIControlStateNormal];
+        sortButton.tag = 1001;
+        sortButton.accessibilityIdentifier = @"id.navigation.sort.button";
+        sortButton.hidden = YES;
+        [sortButton addTarget:self action:@selector(sortButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
         
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateTestButtonVisibility:) name:@"YTMUShowTestButton" object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateTestButtonVisibility:) name:@"YTMUHideTestButton" object:nil];
+        [self addSubview:sortButton];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateSortButtonVisibility:) name:@"YTMUShowSortButton" object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateSortButtonVisibility:) name:@"YTMUHideSortButton" object:nil];
     }
 
-    CGSize buttonSize = [testButton sizeThatFits:CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX)];
-    CGFloat buttonWidth = MAX(buttonSize.width, 44); // Ensure minimum touch target size
-    CGFloat buttonHeight = MIN(MAX(buttonSize.height, 44), self.frame.size.height - 16); // Ensure minimum touch target size and fit within nav bar
-    CGFloat buttonY = (self.frame.size.height - buttonHeight) / 2;
-
+    CGFloat buttonSize = 40;
+    CGFloat buttonY = (self.frame.size.height - buttonSize) / 2;
     CGFloat leftmostX = self.frame.size.width;
+
     for (UIView *button in existingButtons) {
         if (button.frame.origin.x < leftmostX) {
             leftmostX = button.frame.origin.x;
         }
     }
 
-    CGFloat testButtonX = leftmostX - buttonWidth - 8;
-    testButton.frame = CGRectMake(testButtonX, buttonY, buttonWidth, buttonHeight);
+    CGFloat sortButtonX = MAX(8, leftmostX - buttonSize - 8);
+    sortButton.frame = CGRectMake(sortButtonX, buttonY, buttonSize, buttonSize);
+
+    sortButton.imageView.translatesAutoresizingMaskIntoConstraints = NO;
+    [NSLayoutConstraint activateConstraints:@[
+        [sortButton.imageView.centerXAnchor constraintEqualToAnchor:sortButton.centerXAnchor],
+        [sortButton.imageView.centerYAnchor constraintEqualToAnchor:sortButton.centerYAnchor],
+        [sortButton.imageView.widthAnchor constraintEqualToConstant:24],
+        [sortButton.imageView.heightAnchor constraintEqualToConstant:24]
+    ]];
+
+    sortButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
+    sortButton.imageView.image = [sortButton.imageView.image imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
 }
 
 - (void)dealloc {
@@ -93,13 +103,12 @@ static BOOL YTMU(NSString *key) {
 }
 
 %new
-- (void)updateTestButtonVisibility:(NSNotification *)notification {
-    QTMButton *testButton = [self viewWithTag:1001];
-    if ([notification.name isEqualToString:@"YTMUShowTestButton"]) {
-        testButton.hidden = NO;
-    } else if ([notification.name isEqualToString:@"YTMUHideTestButton"]) {
-        testButton.hidden = YES;
+- (void)updateSortButtonVisibility:(NSNotification *)notification {
+    QTMButton *sortButton = [self viewWithTag:1001];
+    if ([notification.name isEqualToString:@"YTMUShowSortButton"]) {
+        sortButton.hidden = NO;
+    } else if ([notification.name isEqualToString:@"YTMUHideSortButton"]) {
+        sortButton.hidden = YES;
     }
 }
-
 %end

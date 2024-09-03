@@ -71,11 +71,11 @@ static BOOL YTMU(NSString *key) {
     %orig;
     YTICommand *navEndpoint = [self valueForKey:@"_navEndpoint"];
     if ([navEndpoint.browseEndpoint.browseId isEqualToString:@"BHdownloadsVC"]) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"YTMUShowTestButton" object:nil];
-        NSLog(@"VIEW DID APPEAR: DOWNLOADS, POST SHOW TEST BUTTON NOTIFICATION");
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"YTMUShowSortButton" object:nil];
+        NSLog(@"VIEW DID APPEAR: DOWNLOADS, POST SHOW SORT BUTTON NOTIFICATION");
     } else {
-        [[NSNotificationCenter defaultCenter] postNotificationName:@"YTMUHideTestButton" object:nil];
-        NSLog(@"VIEW DID DISAPPEAR: DOWNLOADS, POST HIDE TEST BUTTON NOTIFICATION");
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"YTMUHideSortButton" object:nil];
+        NSLog(@"VIEW DID DISAPPEAR: DOWNLOADS, POST HIDE SORT BUTTON NOTIFICATION");
     }
 }
 
