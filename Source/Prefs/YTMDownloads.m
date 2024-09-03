@@ -23,6 +23,7 @@
     ]];
 
     [self maybeShowEmptyState];
+    [self loadSortPreferences];
     [self refreshAudioFiles];
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:@"ReloadDataNotification" object:nil];
@@ -86,15 +87,12 @@
     NSPredicate *mp3Predicate = [NSPredicate predicateWithFormat:@"SELF ENDSWITH[c] '.mp3'"];
     NSPredicate *predicate = [NSCompoundPredicate orPredicateWithSubpredicates:@[m4aPredicate, mp3Predicate]];
 
-    NSArray *filteredFiles = [allFiles filteredArrayUsingPredicate:predicate];
-
-    NSSortDescriptor *sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self" ascending:YES selector:@selector(localizedCaseInsensitiveCompare:)];
-    NSArray *sortedFiles = [filteredFiles sortedArrayUsingDescriptors:@[sortDescriptor]];
-
-    self.audioFiles = [NSMutableArray arrayWithArray:sortedFiles];
+    self.audioFiles = [NSMutableArray arrayWithArray:[allFiles filteredArrayUsingPredicate:predicate]];
 
     self.imageView.tintColor = self.audioFiles.count == 0 ? [[UIColor whiteColor] colorWithAlphaComponent:0.8] : [UIColor clearColor];
     self.label.textColor = self.audioFiles.count == 0 ? [[UIColor whiteColor] colorWithAlphaComponent:0.8] : [UIColor clearColor];
+
+    [self sortAudioFiles];
 }
 
 #pragma mark - Table view stuff
@@ -361,7 +359,7 @@
 
 - (void)showSortOptions {
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:LOC(@"SORT_BY") message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-    
+
     NSArray *sortOptions = @[LOC(@"NAME"), LOC(@"DATE"), LOC(@"SIZE")];
 
     NSString *ascendingOldNew = [NSString stringWithFormat:@"%@→%@", LOC(@"SORT_OLD"), LOC(@"SORT_NEW")];
@@ -387,14 +385,27 @@
                 self.isAscending = YES;
             }
             [self sortAudioFiles];
+            [self saveSortPreferences];
         }];
         [alertController addAction:action];
     }
-    
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:LOC(@"CANCEL") style:UIAlertActionStyleCancel handler:nil];
-    [alertController addAction:cancelAction];
-    
+
+    [alertController addAction:[UIAlertAction actionWithTitle:LOC(@"CANCEL") style:UIAlertActionStyleCancel handler:nil]];
+
     [self presentViewController:alertController animated:YES completion:nil];
+}
+
+- (void)saveSortPreferences {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setInteger:self.currentSortOption forKey:@"YTMDownloadsSortOption"];
+    [defaults setBool:self.isAscending forKey:@"YTMDownloadsSortAscending"];
+    [defaults synchronize];
+}
+
+- (void)loadSortPreferences {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    self.currentSortOption = [defaults integerForKey:@"YTMDownloadsSortOption"];
+    self.isAscending = [defaults boolForKey:@"YTMDownloadsSortAscending"];
 }
 
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex {
@@ -413,34 +424,25 @@
     NSURL *documentsURL = [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
     NSURL *downloadsURL = [documentsURL URLByAppendingPathComponent:@"YTMusicUltimate"];
     
-    NSArray *sortedFiles = [self.audioFiles sortedArrayUsingComparator:^NSComparisonResult(NSString *file1, NSString *file2) {
-        NSURL *url1 = [downloadsURL URLByAppendingPathComponent:file1];
-        NSURL *url2 = [downloadsURL URLByAppendingPathComponent:file2];
-        
-        NSDictionary *attrs1 = [[NSFileManager defaultManager] attributesOfItemAtPath:url1.path error:nil];
-        NSDictionary *attrs2 = [[NSFileManager defaultManager] attributesOfItemAtPath:url2.path error:nil];
-        
-        NSComparisonResult result;
-
-        switch (self.currentSortOption) {
-            case 0:
-                result = [file1 compare:file2 options:NSCaseInsensitiveSearch];
-                break;
-            case 1:
-                result = [[attrs1 fileModificationDate] compare:[attrs2 fileModificationDate]];
-                break;
-            case 2:
-                result = [attrs1[NSFileSize] compare:attrs2[NSFileSize]];
-                break;
-            default:
-                result = NSOrderedSame;
-                break;
-        }
-        
-        return self.isAscending ? result : (result * -1);
-    }];
+    NSSortDescriptor *sortDescriptor;
     
-    self.audioFiles = [NSMutableArray arrayWithArray:sortedFiles];
+    if (self.currentSortOption == 1) {
+        sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self" ascending:self.isAscending comparator:^NSComparisonResult(NSString *file1, NSString *file2) {
+            NSDictionary *attr1 = [[NSFileManager defaultManager] attributesOfItemAtPath:[downloadsURL URLByAppendingPathComponent:file1].path error:nil];
+            NSDictionary *attr2 = [[NSFileManager defaultManager] attributesOfItemAtPath:[downloadsURL URLByAppendingPathComponent:file2].path error:nil];
+            return [[attr1 fileModificationDate] compare:[attr2 fileModificationDate]];
+        }];
+    } else if (self.currentSortOption == 2) {
+        sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self" ascending:self.isAscending comparator:^NSComparisonResult(NSString *file1, NSString *file2) {
+            NSDictionary *attr1 = [[NSFileManager defaultManager] attributesOfItemAtPath:[downloadsURL URLByAppendingPathComponent:file1].path error:nil];
+            NSDictionary *attr2 = [[NSFileManager defaultManager] attributesOfItemAtPath:[downloadsURL URLByAppendingPathComponent:file2].path error:nil];
+            return [@([attr1 fileSize]) compare:@([attr2 fileSize])];
+        }];
+    } else {
+        sortDescriptor = [NSSortDescriptor sortDescriptorWithKey:@"self" ascending:self.isAscending selector:@selector(localizedCaseInsensitiveCompare:)];
+    }
+
+    self.audioFiles = [[self.audioFiles sortedArrayUsingDescriptors:@[sortDescriptor]] mutableCopy];
     [self.tableView reloadData];
 }
 

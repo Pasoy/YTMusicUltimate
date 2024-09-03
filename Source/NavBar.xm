@@ -60,7 +60,7 @@ static BOOL YTMU(NSString *key) {
         sortButton.accessibilityIdentifier = @"id.navigation.sort.button";
         sortButton.hidden = YES;
         [sortButton addTarget:self action:@selector(sortButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-        
+
         [self addSubview:sortButton];
 
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateSortButtonVisibility:) name:@"YTMUShowSortButton" object:nil];
