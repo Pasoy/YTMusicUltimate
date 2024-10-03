@@ -50,10 +50,10 @@ static BOOL YTMU(NSString *key) {
             [sortFilterButton removeFromSuperview];
         }
     }
-    
+
     QTMButton *sortButton = (QTMButton *)[self viewWithTag:1001];
     if (!sortButton) {
-        sortButton = [[NSClassFromString(@"QTMButton") alloc] init];
+        sortButton = [[NSClassFromString(@"QTMButton") alloc] initWithFrame:CGRectMake(0, 0, 40, 40)];
         UIImage *sortImage = [UIImage systemImageNamed:@"line.3.horizontal.circle" withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:24 weight:UIImageSymbolWeightThin]];
         [sortButton setImage:sortImage forState:UIControlStateNormal];
         sortButton.tag = 1001;
@@ -61,24 +61,21 @@ static BOOL YTMU(NSString *key) {
         sortButton.hidden = YES;
         [sortButton addTarget:self action:@selector(sortButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
 
-        [self addSubview:sortButton];
+        [self addRightButton:sortButton];
 
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateSortButtonVisibility:) name:@"YTMUShowSortButton" object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateSortButtonVisibility:) name:@"YTMUHideSortButton" object:nil];
     }
 
-    CGFloat buttonSize = 40;
-    CGFloat buttonY = (self.frame.size.height - buttonSize) / 2;
-    CGFloat leftmostX = self.frame.size.width;
-
-    for (UIView *button in existingButtons) {
-        if (button.frame.origin.x < leftmostX) {
+    CGFloat leftmostX = self.bounds.size.width;
+    for (UIButton *button in self.rightButtons) {
+        if (button != sortButton && button.frame.origin.x < leftmostX) {
             leftmostX = button.frame.origin.x;
         }
     }
 
-    CGFloat sortButtonX = MAX(8, leftmostX - buttonSize - 8);
-    sortButton.frame = CGRectMake(sortButtonX, buttonY, buttonSize, buttonSize);
+    CGFloat sortButtonX = leftmostX - sortButton.frame.size.width - 8;
+    sortButton.frame = CGRectMake(sortButtonX, 8, 40, 40);
 
     sortButton.imageView.translatesAutoresizingMaskIntoConstraints = NO;
     [NSLayoutConstraint activateConstraints:@[
