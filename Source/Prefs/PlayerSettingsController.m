@@ -31,7 +31,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     if (section == 0) {
-        return 7;
+        return 8;
     } if (section == 2) {
         return 3;
     } if (section == 3) {
@@ -59,10 +59,9 @@
     NSMutableDictionary *YTMUltimateDict = [NSMutableDictionary dictionaryWithDictionary:[[NSUserDefaults standardUserDefaults] dictionaryForKey:@"YTMUltimate"]];
 
     if (indexPath.section == 0) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"boolsCell"];
-        
         NSArray *settingsData = @[
             @{@"title": LOC(@"DOWNLOAD_AUDIO"), @"desc": LOC(@"DOWNLOAD_AUDIO_DESC"), @"key": @"downloadAudio"},
+            @{@"title": LOC(@"DEFAULT_AUDIO_QUALITY"), @"desc": LOC(@"DEFAULT_AUDIO_QUALITY_DESC"), @"key": @"defaultAudioQuality"},
             @{@"title": LOC(@"DOWNLOAD_COVER"), @"desc": LOC(@"DOWNLOAD_COVER_DESC"), @"key": @"downloadCoverImage"},
             @{@"title": LOC(@"PLAYBACK_RATE_BUTTON"), @"desc": LOC(@"PLAYBACK_RATE_BUTTON_DESC"), @"key": @"playbackRateButton"},
             @{@"title": LOC(@"SELECTABLE_LYRICS"), @"desc": LOC(@"SELECTABLE_LYRICS_DESC"), @"key": @"selectableLyrics"},
@@ -73,18 +72,36 @@
 
         NSDictionary *data = settingsData[indexPath.row];
 
-        cell.textLabel.text = data[@"title"];
-        cell.textLabel.adjustsFontSizeToFitWidth = YES;
-        cell.detailTextLabel.text = data[@"desc"];
-        cell.detailTextLabel.numberOfLines = 0;
-        cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
+        if (indexPath.row == 1) {
+            cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:@"defaultQualityCell"];
+            cell.textLabel.text = data[@"title"];
+            cell.textLabel.adjustsFontSizeToFitWidth = YES;
 
-        ABCSwitch *switchControl = [[NSClassFromString(@"ABCSwitch") alloc] init];
-        switchControl.onTintColor = [UIColor colorWithRed:30.0/255.0 green:150.0/255.0 blue:245.0/255.0 alpha:1.0];
-        [switchControl addTarget:self action:@selector(toggleSwitch:) forControlEvents:UIControlEventValueChanged];
-        switchControl.tag = indexPath.row;
-        switchControl.on = [YTMUltimateDict[data[@"key"]] boolValue];
-        cell.accessoryView = switchControl;
+            NSMutableDictionary *YTMUltimateDict = [NSMutableDictionary dictionaryWithDictionary:[[NSUserDefaults standardUserDefaults] dictionaryForKey:@"YTMUltimate"]];
+            NSString *currentQuality = YTMUltimateDict[@"defaultAudioQuality"] ?: @"best";
+            
+            if ([currentQuality isEqualToString:@"manual"]) {
+                cell.detailTextLabel.text = LOC(@"MANUAL");
+            } else {
+                cell.detailTextLabel.text = [currentQuality isEqualToString:@"best"] ? LOC(@"BEST_POSSIBLE") : currentQuality;
+            }
+            
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        } else {
+            cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:@"boolsCell"];
+            cell.textLabel.text = data[@"title"];
+            cell.textLabel.adjustsFontSizeToFitWidth = YES;
+            cell.detailTextLabel.text = data[@"desc"];
+            cell.detailTextLabel.numberOfLines = 0;
+            cell.detailTextLabel.textColor = [UIColor secondaryLabelColor];
+
+            ABCSwitch *switchControl = [[NSClassFromString(@"ABCSwitch") alloc] init];
+            switchControl.onTintColor = [UIColor colorWithRed:30.0/255.0 green:150.0/255.0 blue:245.0/255.0 alpha:1.0];
+            [switchControl addTarget:self action:@selector(toggleSwitch:) forControlEvents:UIControlEventValueChanged];
+            switchControl.tag = indexPath.row;
+            switchControl.on = [YTMUltimateDict[data[@"key"]] boolValue];
+            cell.accessoryView = switchControl;
+        }
 
         return cell;
     }
@@ -199,8 +216,19 @@
     return cell;
 }
 
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
+    if (indexPath.section == 0 && indexPath.row == 1) {
+        YTMAudioQualitySelectionViewController *qualityVC = [[YTMAudioQualitySelectionViewController alloc] init];
+        qualityVC.delegate = self;
+        qualityVC.isDefaultQualitySelection = YES;
+        [self.navigationController pushViewController:qualityVC animated:YES];
+    }
+}
+
 - (BOOL)tableView:(UITableView *)tableView shouldHighlightRowAtIndexPath:(NSIndexPath *)indexPath {
-    return NO;
+    return indexPath.section == 0 && indexPath.row == 1 ? YES : NO;
 }
 
 - (void)toggleSwitch:(UISwitch *)sender {
@@ -292,6 +320,16 @@
 
 - (void)hideKeyboard {
     [self.view endEditing:YES];
+}
+
+#pragma mark - YTMAudioQualitySelectionDelegate
+
+- (void)audioQualitySelected:(NSString *)quality {
+    NSMutableDictionary *YTMUltimateDict = [NSMutableDictionary dictionaryWithDictionary:[[NSUserDefaults standardUserDefaults] dictionaryForKey:@"YTMUltimate"]];
+    [YTMUltimateDict setObject:quality forKey:@"defaultAudioQuality"];
+    [[NSUserDefaults standardUserDefaults] setObject:YTMUltimateDict forKey:@"YTMUltimate"];
+    
+    [self.tableView reloadData];
 }
 
 @end
