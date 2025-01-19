@@ -14,7 +14,25 @@ prompt_with_default() {
     echo "${value:-$default}"
 }
 
-yt_version=$(prompt_with_default "Enter YouTube IPA version" "vX.XX")
+copy_to_icloud=false
+
+# Parse command line arguments
+while getopts ":m" opt; do
+  case ${opt} in
+    m )
+      copy_to_icloud=true
+      ;;
+    \? )
+      echo "Invalid option: $OPTARG" 1>&2
+      ;;
+    : )
+      echo "Invalid option: $OPTARG requires an argument" 1>&2
+      ;;
+  esac
+done
+shift $((OPTIND -1))
+
+yt_version=$(prompt_with_default "Enter YouTube IPA version" "v7.25.4")
 tweak_version=$(prompt_with_default "Enter tweak version" "2.2")
 
 read -p "Enter absolute path to IPA file or press Enter to use IPA from current directory: " ipa_path
@@ -34,7 +52,7 @@ make clean package SIDELOADING=1 || error_exit "Failed to clean and package."
 (
     cd packages || error_exit "Failed to change to packages directory."
     deb_file=$(ls *.deb 2>/dev/null) || error_exit "No .deb file found in packages directory."
-    output_ipa="YTMusicUltimate-${yt_version}-${tweak_version}.ipa"
+    output_ipa="YTMusicUltimate-${yt_version}-${tweak_version}-Pasoy.ipa"
     echo "Using .deb file: $deb_file"
     ~/Azule/azule -i "$ipa_path" -o "$PWD/$output_ipa" -f "$PWD/$deb_file" || error_exit "Azule failed to process the IPA."
     mv "$output_ipa" "${output_ipa%.ipa}.zip" || error_exit "Failed to rename IPA to ZIP."
@@ -43,4 +61,15 @@ make clean package SIDELOADING=1 || error_exit "Failed to clean and package."
     zip -qr "$output_ipa" Payload || error_exit "Failed to create final IPA."
     rm -rf Payload "${output_ipa%.ipa}.zip" || error_exit "Failed to clean up temporary files."
     echo "Successfully created: $output_ipa"
+
+    if [ "$copy_to_icloud" = true ] ; then
+        icloud_path="/Users/pasoy/Library/Mobile Documents/com~apple~CloudDocs/Downloads"
+        monkeyapp_path="/Users/pasoy/Desktop/MonkeyAppTest/MonkeyAppTest/TargetApp"
+        if [ -d "$icloud_path" ]; then
+            # cp -f "$output_ipa" "$icloud_path/" && echo "Copied $output_ipa to iCloud Downloads folder."
+            cp -f "$output_ipa" "$monkeyapp_path/" && echo "Copied $output_ipa to MonkeyApp folder."
+        else
+            echo "iCloud Downloads folder not found. Skipping copy to iCloud."
+        fi
+    fi
 )

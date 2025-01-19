@@ -12,94 +12,50 @@
 #import "Headers/YTIThumbnailDetails_Thumbnail.h"
 #import "Headers/YTIFormatStream.h"
 #import "Headers/YTAlertView.h"
-
-#define BHButtonType 909
-#define STYLE_LIGHT_TEXT 15
-#define SIZE_DEFAULT 1
-#define buttonAccessibilityLabel @"BHDownloadButton"
+#import "Headers/ELMNodeController.h"
 
 static BOOL YTMU(NSString *key) {
     NSDictionary *YTMUltimateDict = [[NSUserDefaults standardUserDefaults] dictionaryForKey:@"YTMUltimate"];
     return [YTMUltimateDict[key] boolValue];
 }
 
-// Set action bar button icon
-%hook YTIIcon
-- (UIImage *)iconImageWithColor:(UIColor *)color {
-    if (self.iconType == BHButtonType) {
-        UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(24, 24)];
-        UIImage *image = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull rendererContext) {
-            UIImage *buttonImage = [UIImage systemImageNamed:@"flame"];
-            UIView *imageView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 24, 24)];
-            UIImageView *buttonImageView = [[UIImageView alloc] initWithImage:buttonImage];
-            buttonImageView.contentMode = UIViewContentModeScaleAspectFit;
-            buttonImageView.clipsToBounds = YES;
-            buttonImageView.tintColor = color;
-            buttonImageView.frame = imageView.bounds;
+@interface UIView ()
+- (UIViewController *)_viewControllerForAncestor;
+@end
 
-            [imageView addSubview:buttonImageView];
-            [imageView.layer renderInContext:rendererContext.CGContext];
-        }];
-
-        if ([image respondsToSelector:@selector(imageFlippedForRightToLeftLayoutDirection)]) {
-            image = [image imageFlippedForRightToLeftLayoutDirection];
-        }
-
-        return image;
-    }
-
-    return %orig;
-}
-%end
-
-@interface YTMActionRowView ()
+@interface ELMTouchCommandPropertiesHandler : NSObject
+- (void)downloadAudio:(YTPlayerViewController *)playerResponse;
+- (void)downloadCoverImage:(YTPlayerViewController *)playerResponse;
 - (NSString *)getURLFromManifest:(NSURL *)manifest;
 @end
 
-// Set action bar button
-%hook YTMActionRowView
-- (void)setButtonRenderers:(NSArray *)supportedRenderers {
-    NSMutableArray *newSupportedRenderers = [supportedRenderers mutableCopy];
+%hook ELMTouchCommandPropertiesHandler
+- (void)handleTap {
 
-    YTIBrowseEndpoint *endPoint = [[%c(YTIBrowseEndpoint) alloc] init];
-    endPoint.browseId = buttonAccessibilityLabel;
-
-    YTICommand *command = [[%c(YTICommand) alloc] init];
-    command.browseEndpoint = endPoint;
-
-    YTIIcon *icon = [[%c(YTIIcon) alloc] init];
-    icon.iconType = BHButtonType;
-
-    YTIAccessibilityData *accessibilityDataString = [[%c(YTIAccessibilityData) alloc] init];
-    accessibilityDataString.label = buttonAccessibilityLabel;
-
-    YTIButtonRenderer *buttonRenderer = [[%c(YTIButtonRenderer) alloc] init];
-    buttonRenderer.style = STYLE_LIGHT_TEXT;
-    buttonRenderer.size = SIZE_DEFAULT;
-    buttonRenderer.icon = icon;
-
-    YTIFormattedString *text = [%c(YTIFormattedString) formattedStringWithString:@"YTMUltimate"];
-    if (!YTMU(@"premiumWorkaround")) [buttonRenderer setText:text];
-
-    buttonRenderer.accessibility = accessibilityDataString;
-    buttonRenderer.accessibilityData.accessibilityData = accessibilityDataString;
-
-    YTIPlayerOverlayActionSupportedRenderers *supportedRenderer = [[%c(YTIPlayerOverlayActionSupportedRenderers) alloc] init];
-    [supportedRenderer setButtonRenderer:buttonRenderer];
-
-    [newSupportedRenderers insertObject:supportedRenderer atIndex:1];
-    YTMU(@"YTMUltimateIsEnabled") && (YTMU(@"downloadAudio") || YTMU(@"downloadCoverImage")) ? %orig(newSupportedRenderers) : %orig;
-
-    NSMutableArray *actionButtonsFromRenderers = [self valueForKey:@"_actionButtonsFromRenderers"];
-    MDCButton *ytmuButtonRenderer = actionButtonsFromRenderers.firstObject;
-    if ([ytmuButtonRenderer.accessibilityLabel isEqualToString:buttonAccessibilityLabel]) {
-        [ytmuButtonRenderer addTarget:self action:@selector(ytmuButtonAction:) forControlEvents:UIControlEventTouchUpInside];
+    if (class_getInstanceVariable([self class], "_controller") == NULL) {
+        return %orig;
     }
-}
 
-%new
-- (void)ytmuButtonAction:(MDCButton *)sender {
-    YTPlayerResponse *playerResponse = self.parentResponder.parentViewController.playerViewController.playerResponse;
+
+    if (class_getInstanceVariable([self class], "_tapRecognizer") == NULL) {
+        return %orig;
+    }
+
+    ELMNodeController *node = [self valueForKey:@"_controller"];
+    UIGestureRecognizer *tapRecognizer = [self valueForKey:@"_tapRecognizer"];
+
+    if (![node.key isEqualToString:@"music_download_badge_1"]) {
+        return %orig;
+    }
+
+    if (![tapRecognizer.view._viewControllerForAncestor isKindOfClass:%c(YTMNowPlayingViewController)]) {
+        return %orig;
+    }
+
+    YTMNowPlayingViewController *playingVC = (YTMNowPlayingViewController *)tapRecognizer.view._viewControllerForAncestor;
+    YTMWatchViewController *watchVC = (YTMWatchViewController *)playingVC.parentViewController;
+    YTPlayerViewController *playerVC = watchVC.playerViewController;
+    YTPlayerResponse *playerResponse = playerVC.playerResponse;
 
     if (playerResponse) {
         NSMutableDictionary *YTMUltimateDict = [NSMutableDictionary dictionaryWithDictionary:[[NSUserDefaults standardUserDefaults] dictionaryForKey:@"YTMUltimate"]];
@@ -107,7 +63,7 @@ static BOOL YTMU(NSString *key) {
 
         if ([defaultQuality isEqualToString:@"manual"]) {
             YTMActionSheetController *sheetController = [%c(YTMActionSheetController) musicActionSheetController];
-            sheetController.sourceView = sender;
+            sheetController.sourceView = tapRecognizer.view;
             [sheetController addHeaderWithTitle:LOC(@"SELECT_ACTION") subtitle:nil];
 
             [sheetController addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"DOWNLOAD_AUDIO") iconImage:[%c(YTUIResources) audioOutline] style:0 handler:^ {
@@ -115,18 +71,22 @@ static BOOL YTMU(NSString *key) {
             }]];
 
             [sheetController addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"DOWNLOAD_COVER") iconImage:[%c(YTUIResources) outlineImageWithColor:[UIColor whiteColor]] style:0 handler:^ {
-                [self downloadCoverImage];
+                [self downloadCoverImage:playerVC];
             }]];
 
+            [sheetController addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"DOWNLOAD_PREMIUM") iconImage:[%c(YTUIResources) downloadOutline] secondaryIconImage:[%c(YTUIResources) youtubePremiumBadgeLight] accessibilityIdentifier:nil handler:^ {
+                return %orig;
+                }]];
+
             if (YTMU(@"downloadAudio") && YTMU(@"downloadCoverImage")) {
-                [sheetController presentFromViewController:self.parentResponder animated:YES completion:nil];
+                [sheetController presentFromViewController:playerVC animated:YES completion:nil];
             } else if (YTMU(@"downloadAudio")) {
                 [self showAudioQualitySelection];
             } else if (YTMU(@"downloadCoverImage")) {
-                [self downloadCoverImage];
+                [self downloadCoverImage:playerVC];
             }
         } else {
-            [self downloadAudioWithQuality:defaultQuality];
+            [self downloadAudioWithQuality:defaultQuality playerViewController:playerVC];
         }
     } else {
         YTAlertView *alertView = [%c(YTAlertView) infoDialog];
@@ -150,19 +110,25 @@ static BOOL YTMU(NSString *key) {
 }
 
 %new
-- (void)downloadAudioWithQuality:(NSString *)quality {
-    YTMNowPlayingViewController *parentVC = self.parentResponder;
-    YTPlayerResponse *playerResponse = parentVC.parentViewController.playerViewController.playerResponse;
+- (void)downloadAudioWithQuality:(NSString *)quality playerViewController:(YTPlayerViewController *)playerVC {
+    YTPlayerResponse *playerResponse;
+
+    if (playerVC) {
+        playerResponse = playerVC.playerResponse;
+    } else {
+        YTMNowPlayingViewController *parentVC = self.parentResponder;
+        playerResponse = parentVC.parentViewController.playerViewController.playerResponse;
+    }
 
     NSString *title = [playerResponse.playerData.videoDetails.title stringByReplacingOccurrencesOfString:@"/" withString:@""];
     NSString *author = [playerResponse.playerData.videoDetails.author stringByReplacingOccurrencesOfString:@"/" withString:@""];
     NSString *urlStr = playerResponse.playerData.streamingData.hlsManifestURL;
 
     FFMpegDownloader *ffmpeg = [[FFMpegDownloader alloc] init];
-    ffmpeg.tempName = parentVC.parentViewController.playerViewController.contentVideoID;
+    ffmpeg.tempName = playerVC.contentVideoID;
     ffmpeg.mediaName = [NSString stringWithFormat:@"%@ - %@", author, title];
-    ffmpeg.duration = round(parentVC.parentViewController.playerViewController.currentVideoTotalMediaTime);
-    
+    ffmpeg.duration = round(playerVC.currentVideoTotalMediaTime);
+
     if ([quality isEqualToString:@"best"]) {
         ffmpeg.quality = @"0";
     } else {
@@ -218,14 +184,14 @@ static BOOL YTMU(NSString *key) {
 }
 
 %new
-- (void)downloadCoverImage {
+- (void)downloadCoverImage:(YTPlayerViewController *)playerVC {
     MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:[UIApplication sharedApplication].keyWindow animated:YES];
     dispatch_async(dispatch_get_main_queue(), ^{
         hud.mode = MBProgressHUDModeIndeterminate;
     });
 
-    YTMNowPlayingViewController *parentVC = self.parentResponder;
-    YTPlayerResponse *playerResponse = parentVC.parentViewController.playerViewController.playerResponse;
+    YTPlayerResponse *playerResponse = playerVC.playerResponse;
+
     NSMutableArray *thumbnailsArray = playerResponse.playerData.videoDetails.thumbnail.thumbnailsArray;
     YTIThumbnailDetails_Thumbnail *thumbnail = [thumbnailsArray lastObject];
     NSString *thumbnailURL = [thumbnail.URL stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"w%u-h%u-", thumbnail.width, thumbnail.width] withString:@"w2048-h2048-"];
