@@ -1,5 +1,9 @@
 #import <UIKit/UIKit.h>
 
-@interface YTQTMButton : UIButton
+@interface QTMButton : UIButton
+@property (nonatomic, copy, readwrite) NSString *accessibilityIdentifier;
+@end
+
+@interface YTQTMButton : QTMButton
 - (void)setSizeWithPaddingAndInsets:(BOOL)sizeWithPaddingAndInsets;
 @end
