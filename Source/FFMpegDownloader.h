@@ -12,6 +12,7 @@
 @property (nonatomic, strong) NSString *tempName;
 @property (nonatomic, strong) NSString *mediaName;
 @property (nonatomic) NSInteger duration;
+@property (nonatomic, strong) NSString *quality;
 - (void)downloadAudio:(NSString *)audioURL;
 - (void)downloadImage:(NSURL *)link;
 - (void)shareMedia:(NSURL *)mediaURL;

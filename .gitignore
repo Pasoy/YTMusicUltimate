@@ -3,3 +3,7 @@
 .upload.swp
 .vscode/
 packages/
+.idea/
+*.json
+*.xml
+*.ipa
