@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import "FFMpegDownloader.h"
+#import "YTMAudioQualitySelectionViewController.h"
 #import "Headers/YTUIResources.h"
 #import "Headers/YTMActionSheetController.h"
 #import "Headers/YTMActionRowView.h"
@@ -57,28 +58,35 @@ static BOOL YTMU(NSString *key) {
     YTPlayerResponse *playerResponse = playerVC.playerResponse;
 
     if (playerResponse) {
-        YTMActionSheetController *sheetController = [%c(YTMActionSheetController) musicActionSheetController];
-        sheetController.sourceView = tapRecognizer.view;
-        [sheetController addHeaderWithTitle:LOC(@"SELECT_ACTION") subtitle:nil];
+        NSMutableDictionary *YTMUltimateDict = [NSMutableDictionary dictionaryWithDictionary:[[NSUserDefaults standardUserDefaults] dictionaryForKey:@"YTMUltimate"]];
+        NSString *defaultQuality = YTMUltimateDict[@"defaultAudioQuality"] ?: @"best";
 
-        [sheetController addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"DOWNLOAD_AUDIO") iconImage:[%c(YTUIResources) audioOutline] style:0 handler:^ {
-            [self downloadAudio:playerVC];
-        }]];
+        if ([defaultQuality isEqualToString:@"manual"]) {
+            YTMActionSheetController *sheetController = [%c(YTMActionSheetController) musicActionSheetController];
+            sheetController.sourceView = tapRecognizer.view;
+            [sheetController addHeaderWithTitle:LOC(@"SELECT_ACTION") subtitle:nil];
 
-        [sheetController addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"DOWNLOAD_COVER") iconImage:[%c(YTUIResources) outlineImageWithColor:[UIColor whiteColor]] style:0 handler:^ {
-            [self downloadCoverImage:playerVC];
-        }]];
+            [sheetController addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"DOWNLOAD_AUDIO") iconImage:[%c(YTUIResources) audioOutline] style:0 handler:^ {
+                [self showAudioQualitySelection];
+            }]];
 
-        [sheetController addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"DOWNLOAD_PREMIUM") iconImage:[%c(YTUIResources) downloadOutline] secondaryIconImage:[%c(YTUIResources) youtubePremiumBadgeLight] accessibilityIdentifier:nil handler:^ {
-            return %orig;
-        }]];
+            [sheetController addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"DOWNLOAD_COVER") iconImage:[%c(YTUIResources) outlineImageWithColor:[UIColor whiteColor]] style:0 handler:^ {
+                [self downloadCoverImage:playerVC];
+            }]];
 
-        if (YTMU(@"downloadAudio") && YTMU(@"downloadCoverImage")) {
-            [sheetController presentFromViewController:playingVC animated:YES completion:nil];
-        } else if (YTMU(@"downloadAudio")) {
-            [self downloadAudio:playerVC];
-        } else if (YTMU(@"downloadCoverImage")) {
-            [self downloadCoverImage:playerVC];
+            [sheetController addAction:[%c(YTActionSheetAction) actionWithTitle:LOC(@"DOWNLOAD_PREMIUM") iconImage:[%c(YTUIResources) downloadOutline] secondaryIconImage:[%c(YTUIResources) youtubePremiumBadgeLight] accessibilityIdentifier:nil handler:^ {
+                return %orig;
+                }]];
+
+            if (YTMU(@"downloadAudio") && YTMU(@"downloadCoverImage")) {
+                [sheetController presentFromViewController:playerVC animated:YES completion:nil];
+            } else if (YTMU(@"downloadAudio")) {
+                [self showAudioQualitySelection];
+            } else if (YTMU(@"downloadCoverImage")) {
+                [self downloadCoverImage:playerVC];
+            }
+        } else {
+            [self downloadAudioWithQuality:defaultQuality playerViewController:playerVC];
         }
     } else {
         YTAlertView *alertView = [%c(YTAlertView) infoDialog];
@@ -89,8 +97,28 @@ static BOOL YTMU(NSString *key) {
 }
 
 %new
-- (void)downloadAudio:(YTPlayerViewController *)playerVC {
-    YTPlayerResponse *playerResponse = playerVC.playerResponse;
+- (void)showAudioQualitySelection {
+    YTMAudioQualitySelectionViewController *qualityVC = [[YTMAudioQualitySelectionViewController alloc] init];
+    qualityVC.delegate = (id<YTMAudioQualitySelectionDelegate>)self;
+    UINavigationController *navController = [[UINavigationController alloc] initWithRootViewController:qualityVC];
+    [self.parentResponder presentViewController:navController animated:YES completion:nil];
+}
+
+%new
+- (void)audioQualitySelected:(NSString *)quality {
+    [self downloadAudioWithQuality:quality];
+}
+
+%new
+- (void)downloadAudioWithQuality:(NSString *)quality playerViewController:(YTPlayerViewController *)playerVC {
+    YTPlayerResponse *playerResponse;
+
+    if (playerVC) {
+        playerResponse = playerVC.playerResponse;
+    } else {
+        YTMNowPlayingViewController *parentVC = self.parentResponder;
+        playerResponse = parentVC.parentViewController.playerViewController.playerResponse;
+    }
 
     NSString *title = [playerResponse.playerData.videoDetails.title stringByReplacingOccurrencesOfString:@"/" withString:@""];
     NSString *author = [playerResponse.playerData.videoDetails.author stringByReplacingOccurrencesOfString:@"/" withString:@""];
@@ -100,6 +128,12 @@ static BOOL YTMU(NSString *key) {
     ffmpeg.tempName = playerVC.contentVideoID;
     ffmpeg.mediaName = [NSString stringWithFormat:@"%@ - %@", author, title];
     ffmpeg.duration = round(playerVC.currentVideoTotalMediaTime);
+
+    if ([quality isEqualToString:@"best"]) {
+        ffmpeg.quality = @"0";
+    } else {
+        ffmpeg.quality = quality;
+    }
 
     
     NSString *extractedURL = [self getURLFromManifest:[NSURL URLWithString:urlStr]];

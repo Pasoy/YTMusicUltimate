@@ -1,5 +1,6 @@
 #import <UIKit/UIKit.h>
 #import "YTMNowPlayingViewController.h"
+#import "YTMAudioQualitySelectionViewController.h"
 #import "Headers/MDCButton.h"
 
 @interface YTMActionRowView : UIView {
@@ -11,6 +12,8 @@
 @property (nonatomic, weak, readonly) YTMNowPlayingViewController *parentResponder;
 
 - (void)ytmuButtonAction:(MDCButton *)sender;
-- (void)downloadAudio;
+- (void)showAudioQualitySelection;
+- (void)audioQualitySelected:(NSString *)quality;
+- (void)downloadAudioWithQuality:(NSString *)quality;
 - (void)downloadCoverImage;
 @end

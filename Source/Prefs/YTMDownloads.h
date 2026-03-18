@@ -10,4 +10,6 @@
 @property (nonatomic, strong) NSMutableArray *audioFiles;
 @property (nonatomic, strong) UIImageView *imageView;
 @property (nonatomic, strong) UILabel *label;
+@property (nonatomic, assign) NSInteger currentSortOption;
+@property (nonatomic, assign) BOOL isAscending;
 @end

@@ -86,4 +86,17 @@ static BOOL YTMU(NSString *key) {
         }
     }
 }
+
+- (void)viewDidAppear:(BOOL)animated {
+    %orig;
+    YTICommand *navEndpoint = [self valueForKey:@"_navEndpoint"];
+    if ([navEndpoint.browseEndpoint.browseId isEqualToString:@"BHdownloadsVC"]) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"YTMUShowSortButton" object:nil];
+        NSLog(@"VIEW DID APPEAR: DOWNLOADS, POST SHOW SORT BUTTON NOTIFICATION");
+    } else {
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"YTMUHideSortButton" object:nil];
+        NSLog(@"VIEW DID DISAPPEAR: DOWNLOADS, POST HIDE SORT BUTTON NOTIFICATION");
+    }
+}
+
 %end

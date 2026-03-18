@@ -25,15 +25,22 @@
     self.hud.label.text = LOC(@"DOWNLOADING");
 
     NSURL *documentsURL = [[[NSFileManager defaultManager] URLsForDirectory:NSDocumentDirectory inDomains:NSUserDomainMask] lastObject];
-    NSURL *destinationURL = [documentsURL URLByAppendingPathComponent:[NSString stringWithFormat:@"%@.m4a", self.tempName]];
-    NSURL *outputURL = [documentsURL URLByAppendingPathComponent:[NSString stringWithFormat:@"YTMusicUltimate/%@.m4a", self.mediaName]];
+    NSURL *destinationURL = [documentsURL URLByAppendingPathComponent:[NSString stringWithFormat:@"%@.mp3", self.tempName]];
+    NSURL *outputURL = [documentsURL URLByAppendingPathComponent:[NSString stringWithFormat:@"YTMusicUltimate/%@.mp3", self.mediaName]];
     NSURL *folderURL = [documentsURL URLByAppendingPathComponent:@"YTMusicUltimate"];
     [[NSFileManager defaultManager] createDirectoryAtURL:folderURL withIntermediateDirectories:YES attributes:nil error:nil];
     [[NSFileManager defaultManager] removeItemAtURL:destinationURL error:nil];
 
     [MobileFFmpegConfig setLogDelegate:self];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        int returnCode = [MobileFFmpeg execute:[NSString stringWithFormat:@"-i %@ -c copy %@", audioURL, destinationURL]];
+        NSString *ffmpegCommand;
+        if ([self.quality isEqualToString:@"0"]) {
+            ffmpegCommand = [NSString stringWithFormat:@"-i %@ -vn -acodec libmp3lame -q:a 0 %@", audioURL, destinationURL];
+        } else {
+            ffmpegCommand = [NSString stringWithFormat:@"-i %@ -vn -acodec libmp3lame -b:a %@ %@", audioURL, self.quality, destinationURL];
+        }
+        
+        int returnCode = [MobileFFmpeg execute:ffmpegCommand];
         dispatch_async(dispatch_get_main_queue(), ^{
             if (returnCode == RETURN_CODE_SUCCESS) {
                 [self.hud hideAnimated:YES];
